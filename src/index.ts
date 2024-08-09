@@ -10,7 +10,6 @@ import User from "./models/user";
 dotenv.config();
 
 const app = express();
-// const BOT_PORT:string | 3000 = process.env.BOT_PORT || 3000;
 const SERVER_PORT:string | 8080 = process.env.SERVER_PORT || 8080;
 const token:string | undefined = process.env.TELEGRAM_TOKEN;
 
@@ -22,6 +21,7 @@ app.use(cors(
     }
 ))
 app.use(express.json());
+app.use('/api/uploads', express.static('uploads'));
 app.use('/api', router)
 
 const bot = new Telegraf(token ? token: '');
