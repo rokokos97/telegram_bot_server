@@ -10,14 +10,13 @@ import UserModel from './models/user';
 import { type IUserInput } from './interfaces';
 import { Sequelize } from 'sequelize';
 
-
 dotenv.config();
 
 const app = express();
 const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? '8080', 10);
 const token: string = process.env.TELEGRAM_TOKEN ?? '';
 
-const sequelize = new Sequelize(
+export const sequelize = new Sequelize(
   process.env.MYSQL_DB_NAME || 'database',
   process.env.MYSQL_DB_USER || 'root',
   process.env.MYSQL_DB_PASSWORD || '',
@@ -25,7 +24,7 @@ const sequelize = new Sequelize(
     host: process.env.MYSQL_DB_HOST || 'localhost',
     dialect: 'mysql',
     logging: false,
-  }
+  },
 );
 
 app.use(
