@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import UserModel from '../models/user';
 import { handleError } from '../utils/handleError';
 
@@ -14,16 +14,16 @@ usersRouter.get('/', async (req: Request, res: Response) => {
 });
 
 usersRouter.get('/:userId', async (req: Request, res: Response) => {
-  const id:string = req.params.userId;
+  const id: string = req.params.userId;
   try {
-    const existingUser = await UserModel.findOne({id});
+    const existingUser = await UserModel.findOne({ id });
     if (!existingUser) {
       return res.status(404).send({
         response: {
           message: 'USER_NOT_FOUND',
           code: 400,
-        }
-      })
+        },
+      });
     }
     res.status(200).json(existingUser);
   } catch (error) {
@@ -33,21 +33,23 @@ usersRouter.get('/:userId', async (req: Request, res: Response) => {
 usersRouter.put('/:userId', async (req: Request, res: Response) => {
   const id: string = req.params.userId;
   try {
-    let user = await UserModel.findOneAndUpdate({id}, req.body, {new: true})
+    const user = await UserModel.findOneAndUpdate({ id }, req.body, {
+      new: true,
+    });
     if (!user) {
       return res.status(404).send({
         response: {
           message: 'USER_NOT_FOUND',
           code: 400,
-        }
-      })
+        },
+      });
     }
-    return  res.status(200).send({
-              response: {
-                message: 'USER_UPDATED_SUCCESSFULLY',
-                code: 200,
-              }
-            });
+    return res.status(200).send({
+      response: {
+        message: 'USER_UPDATED_SUCCESSFULLY',
+        code: 200,
+      },
+    });
   } catch (error) {
     return handleError(error);
   }

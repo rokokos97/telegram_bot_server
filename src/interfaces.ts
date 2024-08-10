@@ -1,6 +1,6 @@
 import { type Document } from 'mongoose';
 
-export interface ITelegramUser {
+export interface ITelegranUser {
   id: string;
   username?: string;
   first_name?: string;
