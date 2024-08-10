@@ -8,12 +8,25 @@ import * as mongoose from 'mongoose';
 import { handleError } from './utils/handleError';
 import UserModel from './models/user';
 import { type IUserInput } from './interfaces';
+import { Sequelize } from 'sequelize';
+
 
 dotenv.config();
 
 const app = express();
 const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? '8080', 10);
 const token: string = process.env.TELEGRAM_TOKEN ?? '';
+
+const sequelize = new Sequelize(
+  process.env.MYSQL_DB_NAME || 'database',
+  process.env.MYSQL_DB_USER || 'root',
+  process.env.MYSQL_DB_PASSWORD || '',
+  {
+    host: process.env.MYSQL_DB_HOST || 'localhost',
+    dialect: 'mysql',
+    logging: false,
+  }
+);
 
 app.use(
   cors({
@@ -26,7 +39,7 @@ app.use(express.json());
 app.use('/api/uploads', express.static('uploads'));
 app.use('/api', router);
 
-const bot = new Telegraf(token);
+const bot = new Telegraf(token || '');
 
 bot.start(async (ctx) => {
   if (!ctx.message?.from) {
@@ -36,9 +49,9 @@ bot.start(async (ctx) => {
   const incomeUser: User = ctx.message?.from;
   const dataUser: IUserInput = {
     id: incomeUser.id.toString(),
-    username: incomeUser.username ?? '',
-    first_name: incomeUser.first_name ?? '',
-    last_name: incomeUser.last_name ?? '',
+    username: incomeUser.username ?? 'Unknown',
+    first_name: incomeUser.first_name ?? 'Unknown',
+    last_name: incomeUser.last_name ?? 'Unknown',
     score: 0,
     dailyScore: 0,
     monthlyScore: 0,
@@ -46,10 +59,9 @@ bot.start(async (ctx) => {
     lastUpdatedMonthly: new Date().toISOString().split('T')[0].slice(0, 7),
     availableLines: 100,
   };
-  console.log('dataUser', dataUser);
   const { id } = dataUser;
   try {
-    console.log('id при ініціалізації', id);
+    console.log('id', id);
     let user = await UserModel.findOne({ id });
     if (user == null) {
       user = new UserModel(dataUser);
@@ -84,13 +96,14 @@ bot.launch();
 
 async function start(): Promise<void> {
   try {
-    await mongoose.connect(process.env.MONGO_DB_CONNECTION_STRING ?? '');
-    console.log('Database connected');
+    await sequelize.authenticate();
+    await sequelize.sync();
+    console.log('MySQL database connected');
     app.listen(SERVER_PORT, () => {
       console.log(`Server is running on port ${SERVER_PORT}`);
     });
   } catch (error) {
-    console.log(error);
+    console.log('Database connection error', error);
     process.exit(1);
   }
 }
