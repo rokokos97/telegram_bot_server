@@ -1,12 +1,17 @@
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../index';
+import { sequelize } from '../database';
 
 const User = sequelize.define(
   'User',
   {
     id: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
+      allowNull: false,
+    },
+    external_id_telegram: {
+      type: DataTypes.STRING,
     },
     username: {
       type: DataTypes.STRING,
@@ -30,7 +35,7 @@ const User = sequelize.define(
       defaultValue: 0,
     },
     lastUpdated: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.STRING,
     },
     lastUpdatedMonthly: {
       type: DataTypes.STRING,
@@ -41,7 +46,8 @@ const User = sequelize.define(
     },
   },
   {
-    timestamps: false,
+    timestamps: true,
+    tableName: 'Users',
   },
 );
 
