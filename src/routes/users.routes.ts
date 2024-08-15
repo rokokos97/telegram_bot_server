@@ -8,8 +8,6 @@ type UserInstance = Model<IUser, IUserInput>;
 
 const usersRouter = express.Router({ mergeParams: true });
 
-
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
 usersRouter.get('/', async (req: Request, res: Response) => {
   try {
     const usersList = await UserModel.findAll();
