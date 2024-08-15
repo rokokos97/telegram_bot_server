@@ -1,5 +1,3 @@
-import { type Document } from 'mongoose';
-
 export interface ITelegranUser {
   id: string;
   username?: string;
@@ -7,8 +5,9 @@ export interface ITelegranUser {
   last_name?: string;
 }
 
-export interface IUser extends Document {
-  id: string;
+export interface IUser {
+  id?: string;
+  external_id_telegram: string;
   username: string;
   first_name: string;
   last_name: string;
@@ -21,17 +20,26 @@ export interface IUser extends Document {
   createdAt?: Date;
   updatedAt?: Date;
 }
-
 export interface IUserInput {
-  _id?: string;
-  id: string;
+  id?: string;
+  external_id_telegram: string;
   username: string;
   first_name: string;
   last_name: string;
-  score: number;
-  dailyScore: number;
-  monthlyScore: number;
-  lastUpdated: string;
-  lastUpdatedMonthly: string;
-  availableLines: number;
+  score?: number;
+  dailyScore?: number;
+  monthlyScore?: number;
+  lastUpdated?: string;
+  lastUpdatedMonthly?: string;
+  availableLines?: number;
+}
+
+export interface ILevel {
+  id?: number;
+  external_id: string;
+  name: string;
+  numberOfCodeLines: string;
+  imgUrl: string;
+  xlevel: string;
+  maxLines: string;
 }

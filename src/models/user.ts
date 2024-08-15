@@ -1,23 +1,54 @@
-import { Schema, model } from 'mongoose';
-import { type IUser } from '../interfaces';
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../database';
 
-const userSchema = new Schema<IUser>(
+const User = sequelize.define(
+  'User',
   {
-    id: { type: String, required: true, unique: true },
-    username: { type: String, required: true, sparse: true },
-    first_name: { type: String },
-    last_name: { type: String },
-    score: { type: Number },
-    dailyScore: { type: Number },
-    monthlyScore: { type: Number },
-    lastUpdated: { type: String },
-    lastUpdatedMonthly: { type: String },
-    availableLines: { type: Number },
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+      allowNull: false,
+    },
+    external_id_telegram: {
+      type: DataTypes.STRING,
+    },
+    username: {
+      type: DataTypes.STRING,
+    },
+    first_name: {
+      type: DataTypes.STRING,
+    },
+    last_name: {
+      type: DataTypes.STRING,
+    },
+    score: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    dailyScore: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    monthlyScore: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    lastUpdated: {
+      type: DataTypes.STRING,
+    },
+    lastUpdatedMonthly: {
+      type: DataTypes.STRING,
+    },
+    availableLines: {
+      type: DataTypes.INTEGER,
+      defaultValue: 100,
+    },
   },
   {
     timestamps: true,
+    tableName: 'Users',
   },
 );
 
-const UserModel = model<IUser>('UserModel', userSchema);
-export default UserModel;
+export default User;
