@@ -74,4 +74,34 @@ levelsRouter.delete('/:id', async (req: Request, res: Response) => {
     return handleError(error);
   }
 });
+
+levelsRouter.delete('/:id', async (req: Request, res: Response) => {
+  const levelId: string = req.params.id;
+  const updatedLevel: ILevel = req.body as ILevel;
+  try {
+    const existingLevel: LevelInterface | null = await LevelModel.findOne({
+      where: { external_id: levelId },
+    });
+    if (existingLevel == null) {
+      return res.status(404).send({
+        response: {
+          message: 'LEVEL_NOT_FOUND',
+          code: 404,
+        },
+      });
+    }
+    await existingLevel.update({
+      ...updatedLevel,
+    });
+    return res.status(200).send({
+      response: {
+        message: 'LEVEL_UPDATED',
+        code: 200,
+      },
+    });
+  } catch (error) {
+    return handleError(error);
+  }
+});
+
 export default levelsRouter;
