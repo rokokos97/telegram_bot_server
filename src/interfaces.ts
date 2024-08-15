@@ -34,8 +34,9 @@ export interface IUserInput {
   availableLines?: number;
 }
 
-export interface ILevels {
-  id: string;
+export interface ILevel {
+  id?: number;
+  external_id: string;
   name: string;
   numberOfCodeLines: string;
   imgUrl: string;
