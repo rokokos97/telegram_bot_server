@@ -20,7 +20,6 @@ export interface IUser {
   createdAt?: Date;
   updatedAt?: Date;
 }
-
 export interface IUserInput {
   id?: string;
   external_id_telegram: string;
@@ -35,3 +34,11 @@ export interface IUserInput {
   availableLines?: number;
 }
 
+export interface ILevels {
+  id: string;
+  name: string;
+  numberOfCodeLines: string;
+  imgUrl: string;
+  xlevel: string;
+  maxLines: string;
+}
