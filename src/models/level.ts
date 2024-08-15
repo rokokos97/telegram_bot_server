@@ -5,6 +5,12 @@ const Level = sequelize.define(
   'Level',
   {
     id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+      allowNull: false,
+    },
+    external_id: {
       type: DataTypes.STRING,
     },
     name: {
