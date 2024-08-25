@@ -64,8 +64,8 @@ bot.start(async (ctx) => {
         `${dataUser.first_name ?? ''} ${dataUser.last_name ?? ''} welcome back to the game!`,
       );
     }
-    // const frontUrl = 'https://rokokos97.github.io/gala-clicker/';
-    const frontUrl = 'https://galaclicker.poldnik.net/';
+    const frontUrl = 'https://rokokos97.github.io/gala-clicker/';
+    // const frontUrl = 'https://galaclicker.poldnik.net/';
     await ctx.reply('Click the button below to start playing.', {
       reply_markup: {
         inline_keyboard: [[{ text: 'Play Now', web_app: { url: frontUrl } }]],
