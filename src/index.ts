@@ -8,11 +8,12 @@ import { handleError } from './utils/handleError';
 import UserModel from './models/user';
 import { type IUserInput } from './interfaces';
 import { sequelize } from './database';
+import path from 'path';
 
 dotenv.config();
 
 const app = express();
-const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? '8080', 10);
+const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? '3000', 10);
 const token: string = process.env.TELEGRAM_TOKEN ?? '';
 
 app.use(
@@ -25,6 +26,8 @@ app.use(
 app.use(express.json());
 // app.use('/api/uploads', express.static('uploads'));
 app.use('/api', router);
+app.use('/', express.static(path.join(__dirname, 'gala-clicker/dist')));
+path.join(__dirname, 'gala-clicker', 'index.html');
 
 const bot: Telegraf = new Telegraf(token ?? '');
 
@@ -32,7 +35,6 @@ bot.start(async (ctx) => {
   // if (!ctx.message?.from) {
   //   return;
   // }
-  console.log('ctx.message.from', ctx.message.from);
   const incomeUser: User = ctx.message?.from;
   const dataUser: IUserInput = {
     external_id_telegram: incomeUser.id.toString() ?? '007',
@@ -46,17 +48,13 @@ bot.start(async (ctx) => {
     lastUpdatedMonthly: new Date().toISOString().split('T')[0].slice(0, 7),
     availableLines: 100,
   };
-  await ctx.reply(
-    `${dataUser.first_name ?? ''} ${dataUser.last_name ?? ''} welcome to the game!`,
-  );
-  console.log('dataUser', dataUser);
-  const external_id_telegram: string = dataUser.external_id_telegram;
+  await ctx.reply(`WELCOME TO GALA-CLICKER!`);
+  const externalIdTelegram: string = dataUser.external_id_telegram;
   try {
     let user = await UserModel.findOne({
-      where: { external_id_telegram },
+      where: { external_id_telegram: externalIdTelegram },
     });
-    console.log('user', user);
-    if (!user) {
+    if (user === null) {
       user = await UserModel.create({ ...dataUser });
       await user.save();
     } else {
@@ -64,8 +62,7 @@ bot.start(async (ctx) => {
         `${dataUser.first_name ?? ''} ${dataUser.last_name ?? ''} welcome back to the game!`,
       );
     }
-    const frontUrl = 'https://rokokos97.github.io/gala-clicker/';
-    // const frontUrl = 'https://galaclicker.poldnik.net/';
+    const frontUrl = process.env.FRONT_URL ?? 'localhost';
     await ctx.reply('Click the button below to start playing.', {
       reply_markup: {
         inline_keyboard: [[{ text: 'Play Now', web_app: { url: frontUrl } }]],
@@ -83,6 +80,7 @@ bot.on('text', async (ctx) => {
   );
 });
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 bot.launch();
 
 async function start(): Promise<void> {
@@ -98,4 +96,5 @@ async function start(): Promise<void> {
     process.exit(1);
   }
 }
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 start();
