@@ -3,7 +3,7 @@ import { Telegraf } from 'telegraf';
 import UserModel from '../models/user';
 import { handleError } from '../utils/handleError';
 import { type IUser, type IUserInput } from '../interfaces';
-import { type Model } from 'sequelize';
+import { Op, type Model } from 'sequelize';
 
 const leaderbordRouter = express.Router({ mergeParams: true });
 type UserInstance = Model<IUser, IUserInput>;
@@ -63,5 +63,52 @@ function sendRankChangeNotification(
     console.log(`User ${user.username} does not have a Telegram ID.`);
   }
 }
+
+leaderbordRouter.get('/:userId', async (req: Request, res: Response) => {
+  const userId: string = req.params.userId;
+
+  try {
+    const currentUser: UserInstance | null = await UserModel.findOne({
+      where: { external_id_telegram: userId },
+    });
+    if (currentUser == null) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const topUsers: UserInstance[] = await UserModel.findAll({
+      order: [['score', 'DESC']],
+      limit: 9,
+    });
+    const cleanTopUsers: IUser[] = topUsers.map((user) => user.toJSON());
+    if (currentUser !== null) {
+      const currentUserRank: number = currentUser.getDataValue('previousRank');
+      if (currentUserRank <= 10) {
+        const leaderboard: UserInstance[] = await UserModel.findAll({
+          order: [['score', 'DESC']],
+          limit: 10,
+        });
+        const cleanLeaderboard: IUser[] = leaderboard.map((user) =>
+          user.toJSON(),
+        );
+
+        return res.status(200).json({
+          success: true,
+          data: cleanLeaderboard,
+        });
+      } else {
+        const leaderboard = [...cleanTopUsers, currentUser.toJSON()];
+        return res.status(200).json({
+          success: true,
+          data: leaderboard,
+        });
+      }
+    }
+  } catch (error) {
+    return handleError(error);
+  }
+});
 
 export default leaderbordRouter;
