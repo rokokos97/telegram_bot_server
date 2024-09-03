@@ -17,6 +17,7 @@ export interface IUser {
   lastUpdated: string;
   lastUpdatedMonthly: string;
   availableLines: number;
+  previousRank: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -32,6 +33,7 @@ export interface IUserInput {
   lastUpdated?: string;
   lastUpdatedMonthly?: string;
   availableLines?: number;
+  previousRank?: number;
 }
 
 export interface ILevel {
