@@ -44,6 +44,9 @@ const User = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 100,
     },
+    previous_rank: {
+      type: DataTypes.INTEGER,
+    },
   },
   {
     timestamps: true,
