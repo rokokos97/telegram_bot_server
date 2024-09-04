@@ -13,8 +13,9 @@ import path from 'path';
 dotenv.config();
 
 const app = express();
-const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? '3000', 10);
-const token: string = process.env.TELEGRAM_TOKEN ?? '';
+const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? '8888', 10);
+const token: string = process.env.TELEGRAM_TOKEN_GALA ?? '';
+const tokenTricalc = process.env.TELEGRAM_TOKEN_TRICALC ?? '';
 
 app.use(
   cors({
@@ -27,9 +28,21 @@ app.use(express.json());
 // app.use('/api/uploads', express.static('uploads'));
 app.use('/api', router);
 app.use('/', express.static(path.join(__dirname, 'gala-clicker/dist')));
-path.join(__dirname, 'gala-clicker', 'index.html');
+path.join(__dirname, 'gala-clicker/dist', 'index.html');
 
 const bot: Telegraf = new Telegraf(token ?? '');
+const botTricalc: Telegraf = new Telegraf(tokenTricalc ?? '');
+
+botTricalc.start(async (ctx) => {
+  await ctx.reply(`WELCOME TO TRICALC!`);
+  const frontUrl: string =
+    process.env.FRONT_URL_TRICALC ?? 'https://rokokos97.github.io/tricalc/';
+  await ctx.reply('Click the button below to start calculate.', {
+    reply_markup: {
+      inline_keyboard: [[{ text: 'Calculate', web_app: { url: frontUrl } }]],
+    },
+  });
+});
 
 bot.start(async (ctx) => {
   // if (!ctx.message?.from) {
@@ -62,7 +75,7 @@ bot.start(async (ctx) => {
         `${dataUser.first_name ?? ''} ${dataUser.last_name ?? ''} welcome back to the game!`,
       );
     }
-    const frontUrl = process.env.FRONT_URL ?? 'localhost';
+    const frontUrl = process.env.FRONT_URL ?? 'http://127.0.0.1:8080';
     await ctx.reply('Click the button below to start playing.', {
       reply_markup: {
         inline_keyboard: [[{ text: 'Play Now', web_app: { url: frontUrl } }]],
@@ -82,6 +95,8 @@ bot.on('text', async (ctx) => {
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 bot.launch();
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+botTricalc.launch();
 
 async function start(): Promise<void> {
   try {
