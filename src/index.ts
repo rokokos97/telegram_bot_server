@@ -1,115 +1,86 @@
 import express from 'express';
-import { Telegraf } from 'telegraf';
-import { type User } from 'telegraf/typings/core/types/typegram';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import router from './routes/index';
-import { handleError } from './utils/handleError';
-import UserModel from './models/user';
-import { type IUserInput } from './interfaces';
-import { sequelize } from './database';
+import { initDatabase, sequelize } from './database';
 import path from 'path';
+import { CONFIG, env } from './config';
+import { createGalaClickerBot } from './bots/galaClicker';
+import { createTriCalcBot } from './bots/tricalc';
+import chalk from 'chalk';
 
-dotenv.config();
 
 const app = express();
-const SERVER_PORT: number = parseInt(process.env.SERVER_PORT ?? '8888', 10);
-const token: string = process.env.TELEGRAM_TOKEN_GALA ?? '';
-const tokenTricalc = process.env.TELEGRAM_TOKEN_TRICALC ?? '';
+const bot = createGalaClickerBot();
+const botTricalc = createTriCalcBot();
 
-app.use(
-  cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }),
-);
+// Middleware
+app.use(cors(CONFIG.cors));
 app.use(express.json());
-// app.use('/api/uploads', express.static('uploads'));
 app.use('/api', router);
-app.use('/', express.static(path.join(__dirname, 'gala-clicker/dist')));
-path.join(__dirname, 'gala-clicker/dist', 'index.html');
 
-const bot: Telegraf = new Telegraf(token ?? '');
-const botTricalc: Telegraf = new Telegraf(tokenTricalc ?? '');
+// Serve static files
+app.use(express.static(path.join(__dirname, '../public')));
 
-botTricalc.start(async (ctx) => {
-  await ctx.reply(`WELCOME TO TRICALC!`);
-  const frontUrl: string =
-    process.env.FRONT_URL_TRICALC ?? 'https://rokokos97.github.io/tricalc/';
-  await ctx.reply('Click the button below to start calculate.', {
-    reply_markup: {
-      inline_keyboard: [[{ text: 'Calculate', web_app: { url: frontUrl } }]],
-    },
-  });
+// Serve index.html for the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-bot.start(async (ctx) => {
-  // if (!ctx.message?.from) {
-  //   return;
-  // }
-  const incomeUser: User = ctx.message?.from;
-  const dataUser: IUserInput = {
-    external_id_telegram: incomeUser.id.toString() ?? '007',
-    username: incomeUser.username ?? 'Unknown',
-    first_name: incomeUser.first_name ?? 'Unknown',
-    last_name: incomeUser.last_name ?? 'Unknown',
-    score: 0,
-    dailyScore: 0,
-    monthlyScore: 0,
-    lastUpdated: new Date().toISOString().split('T')[0],
-    lastUpdatedMonthly: new Date().toISOString().split('T')[0].slice(0, 7),
-    availableLines: 100,
-  };
-  await ctx.reply(`WELCOME TO GALA-CLICKER!`);
-  const externalIdTelegram: string = dataUser.external_id_telegram;
-  try {
-    let user = await UserModel.findOne({
-      where: { external_id_telegram: externalIdTelegram },
-    });
-    if (user === null) {
-      user = await UserModel.create({ ...dataUser });
-      await user.save();
-    } else {
-      await ctx.reply(
-        `${dataUser.first_name ?? ''} ${dataUser.last_name ?? ''} welcome back to the game!`,
-      );
-    }
-    const frontUrl = process.env.FRONT_URL ?? 'http://127.0.0.1:8080';
-    await ctx.reply('Click the button below to start playing.', {
-      reply_markup: {
-        inline_keyboard: [[{ text: 'Play Now', web_app: { url: frontUrl } }]],
-      },
-    });
-  } catch (error) {
-    console.error('Error in bot.start()', error);
-    handleError(error);
-  }
+// Health check endpoint
+app.get('/health', (_, res) => {
+  res.status(200).json({ status: 'OK' });
 });
-
-bot.on('text', async (ctx) => {
-  await ctx.reply(
-    'Currently, only the game option is available. Click the "Play Game" button below to start.',
-  );
-});
-
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-bot.launch();
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-botTricalc.launch();
 
 async function start(): Promise<void> {
   try {
-    await sequelize.authenticate();
-    await sequelize.sync({ alter: true });
-    console.log('MySQL database connected');
-    app.listen(SERVER_PORT, () => {
-      console.log(`Server is running on port ${SERVER_PORT}`);
+    try {
+      await initDatabase();
+      console.log(chalk.green('Database connected successfully'));
+      bot.launch();
+    } catch (error: any) {
+      console.error('Database connection failed:', error?.message || 'Unknown error');
+    }
+    console.log(chalk.green(`Server starting on PORT ${env.SERVER_PORT}`));
+    // try {
+    //   await Promise.all([
+    //     bot.launch(),
+    //     botTricalc.launch()
+    //   ]);
+    //   console.log('Bots started successfully');
+    // } catch (error: any) {
+    //   console.error('Failed to start bots:', error?.message || 'Unknown error');
+    // }
+    const server = app.listen(env.SERVER_PORT, '0.0.0.0', () => {
+      console.log(`Server is running on port ${env.SERVER_PORT}`);
     });
+    server.on('error', (error: Error & { code?: string }) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${env.SERVER_PORT} is already in use`);
+      } else {
+        console.error('Error starting server:', error);
+      }
+      process.exit(1);
+    });
+
+    // Graceful shutdown
+    const shutdown = async () => {
+      console.log('Shutting down gracefully...');
+      bot.stop('SIGTERM');
+      botTricalc.stop('SIGTERM');
+      await sequelize.close();
+      process.exit(0);
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
   } catch (error) {
-    console.log('Database connection error', error);
+    console.error('Failed to start the application:', error);
     process.exit(1);
   }
 }
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-start();
+
+// Start the application
+start().catch((error) => {
+  console.error('Unhandled error during startup:', error);
+  process.exit(1);
+});
